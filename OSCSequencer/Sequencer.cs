@@ -297,8 +297,8 @@ namespace OSCSequencer
             try
             {
                 Console.WriteLine($"Текущий BPM: {Project.Bpm}");
-                Console.WriteLine($"Паттерн #{Project.CurrentPatternIndex} Длина: {CurrentPattern.Length}");
-                Console.WriteLine($"Шаги: [{string.Join(" ", CurrentPattern.Notes)}]");
+                foreach (var pattern in Project.Patterns)
+                    Console.WriteLine($"Паттерн #{Project.Patterns.IndexOf(pattern)} Длина: {pattern.Length} Шаги: [{string.Join(" ", pattern.Notes)}]");
             }
             finally
             {
