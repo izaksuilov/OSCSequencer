@@ -42,13 +42,27 @@
         private async Task Start()
         {
             Console.WriteLine($"Старт воспроизведения в режиме {_sequencer.PlaybackMode}");
-            await _sequencer.StartAsync();
+            try
+            {
+                await _sequencer.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка запуска: {ex.Message}");
+            }
         }
 
         private async Task Stop()
         {
             Console.WriteLine("Стоп воспроизведения");
-            await _sequencer.StopAsync();
+            try
+            {
+                await _sequencer.StopAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка остановки: {ex.Message}");
+            }
         }
 
         private async Task Pause()
@@ -58,41 +72,85 @@
             else
                 Console.WriteLine("Пауза");
 
-            await _sequencer.PauseAsync();
+            try
+            {
+                await _sequencer.PauseAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка паузы: {ex.Message}");
+            }
         }
 
         private async Task RecordNote()
         {
             Console.WriteLine("Запись ноты");
 
-            int maxPos = _sequencer.CurrentPattern.Length;
-            Console.Write($"Позиция в паттерне (1-{maxPos}): ");
-            int pos = int.Parse(Console.ReadLine() ?? "1");
+            try
+            {
+                int maxPos = _sequencer.CurrentPattern.Length;
+                Console.Write($"Позиция в паттерне (1-{maxPos}): ");
+                int pos = int.Parse(Console.ReadLine() ?? "1");
 
-            Console.Write("Нота (0-127): ");
-            int note = int.Parse(Console.ReadLine() ?? "60");
+                Console.Write("Нота (0-127): ");
+                int note = int.Parse(Console.ReadLine() ?? "60");
 
-            await _sequencer.RecordNoteAsync(pos - 1, note);
-
-            Console.WriteLine("Нота записана!");
+                await _sequencer.RecordNoteAsync(pos - 1, note);
+                Console.WriteLine("Нота записана!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка записи: {ex.Message}");
+            }
         }
 
         private async Task SetTempo()
         {
             Console.Write("Новый BPM: ");
-            await _sequencer.SetTempoAsync(int.Parse(Console.ReadLine() ?? "120"));
+            try
+            {
+                int bpm = int.Parse(Console.ReadLine() ?? "120");
+                await _sequencer.SetTempoAsync(bpm));
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Неверный формат BPM. Попробуйте снова.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка установки bpm: {ex.Message}");
+            }
         }
 
         private async Task SetPatternLength()
         {
             Console.Write("Новая длина: ");
-            await _sequencer.SetPatternLengthAsync(int.Parse(Console.ReadLine() ?? "16"));
+            try
+            {
+                int length = int.Parse(Console.ReadLine() ?? "16");
+                await _sequencer.SetPatternLengthAsync(length);
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Неверный формат длины. Попробуйте снова.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка установки длины: {ex.Message}");
+            }
         }
 
         private async Task ClearPattern()
         {
             Console.WriteLine($"Очистка паттерна {_sequencer.Project.CurrentPatternIndex}");
-            await _sequencer.ClearPatternAsync();
+            try
+            {
+                await _sequencer.ClearPatternAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка очистки паттерна: {ex.Message}");
+            }
         }
 
         private async Task DumpState() => await _sequencer.DumpStateAsync();
@@ -100,35 +158,83 @@
         private async Task SaveProject()
         {
             Console.Write("Имя файла проекта: ");
-            await _sequencer.SaveProjectAsync(Console.ReadLine() ?? "project.xml");
-            Console.WriteLine("Проект сохранен!");
+            try
+            {
+                string filename = Console.ReadLine() ?? "project.xml";
+                await _sequencer.SaveProjectAsync(filename);
+                Console.WriteLine("Проект сохранен!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка сохранения проекта: {ex.Message}");
+            }
         }
 
         private async Task LoadProject()
         {
             Console.Write("Имя файла проекта для загрузки: ");
-            await _sequencer.LoadProjectAsync(Console.ReadLine() ?? "project.xml");
-            Console.WriteLine("Проект загружен!");
+            try
+            {
+                string filename = Console.ReadLine() ?? "project.xml";
+                await _sequencer.LoadProjectAsync(filename);
+                Console.WriteLine("Проект загружен!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки проекта: {ex.Message}");
+            }
         }
 
-        private async Task NextPattern() => await _sequencer.SwitchPatternAsync();
+        private async Task NextPattern()
+        {
+            try
+            {
+                await _sequencer.SwitchPatternAsync();
+                Console.WriteLine($"Переключен паттерн {_sequencer.Project.CurrentPatternIndex}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка переключения паттерна: {ex.Message}");
+            }
+        }
 
         private async Task CopyPattern()
         {
-            await _sequencer.CopyPatternAsync();
-            Console.WriteLine($"Скопирован паттерн {_sequencer.Project.CurrentPatternIndex}");
+            try
+            {
+                await _sequencer.CopyPatternAsync();
+                Console.WriteLine($"Скопирован паттерн {_sequencer.Project.CurrentPatternIndex}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка копирования паттерна: {ex.Message}");
+            }
         }
 
         private async Task SwitchPlaybackMode()
         {
-            await _sequencer.SwitchPlaybackMode();
-            Console.WriteLine($"Выбран режим воспроизведения {_sequencer.PlaybackMode}");
+            try
+            {
+                await _sequencer.SwitchPlaybackMode();
+                Console.WriteLine($"Выбран режим воспроизведения {_sequencer.PlaybackMode}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка выбора режима воспроизведения: {ex.Message}");
+            }
         }
 
         private async Task SwitchVisualization()
         {
-            await _sequencer.SwitchPlaybackMode();
-            Console.WriteLine($"Режим визуализации {(_sequencer.IsVisualizationEnabled ? "Вкл" : "Выкл")}");
+            try
+            {
+                await _sequencer.SwitchPlaybackMode();
+                Console.WriteLine($"Режим визуализации {(_sequencer.IsVisualizationEnabled ? "Вкл" : "Выкл")}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка выбора режима визуализации: {ex.Message}");
+            }
         }
     }
 }
