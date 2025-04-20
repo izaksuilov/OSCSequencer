@@ -37,6 +37,8 @@ namespace OSCSequencer
         private List<int> _activePatterns = new();
         private readonly ConcurrentDictionary<int, int> _patternSteps = new();
 
+        public bool IsVisualizationEnabled { get; set; } = false;
+
         public bool IsPlaying { get; private set; }
         public bool IsPaused { get; private set; }
         private CancellationTokenSource? _playbackCts;
@@ -343,11 +345,12 @@ namespace OSCSequencer
             _playbackCts?.Dispose();
         }
 
-#if DEBUG
-
         // Обновляем визуализацию
         private void UpdateVisualization(bool paused = false)
         {
+            if (!IsVisualizationEnabled)
+                return;
+
             var vis = new StringBuilder();
             vis.AppendLine($"Режим: {PlaybackMode} | BPM: {Project.Bpm} | Статус: {(paused ? "PS" : "PL")}");
 
@@ -374,6 +377,8 @@ namespace OSCSequencer
             Console.SetCursorPosition(0, Console.CursorTop - Project.Patterns.Count - 1);
             Console.Write(vis.ToString());
         }
+
+#if DEBUG
 
         private void DebugSound(int note)
         {

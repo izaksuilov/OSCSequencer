@@ -24,13 +24,14 @@
                 [ConsoleKey.N] = NextPattern,
                 [ConsoleKey.B] = CopyPattern,
                 [ConsoleKey.M] = SwitchPlaybackMode,
+                [ConsoleKey.V] = SwitchVisualization,
             };
         }
 
         public void PrintHelp()
         {
             Console.WriteLine("OSC Секвенсор запущен. Доступные команды:");
-            Console.WriteLine("[M] Режим воспроизведения");
+            Console.WriteLine("[M] Режим воспроизведения [V] Режим визуализации");
             Console.WriteLine("[S] Старт       [X] Стоп       [P] Пауза");
             Console.WriteLine("[R] Запись ноты [T] Темп       [L] Длина паттерна");
             Console.WriteLine("[C] Очистка     [D] Состояние  [F] Сохранить");
@@ -122,6 +123,12 @@
         {
             await _sequencer.SwitchPlaybackMode();
             Console.WriteLine($"Выбран режим воспроизведения {_sequencer.PlaybackMode}");
+        }
+
+        private async Task SwitchVisualization()
+        {
+            await _sequencer.SwitchPlaybackMode();
+            Console.WriteLine($"Режим визуализации {(_sequencer.IsVisualizationEnabled ? "Вкл" : "Выкл")}");
         }
     }
 }
