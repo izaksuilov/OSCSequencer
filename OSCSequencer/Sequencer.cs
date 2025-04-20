@@ -76,15 +76,20 @@ namespace OSCSequencer
                         : PlaybackMode.All;
                 }
 
-                if (PlaybackMode == PlaybackMode.All)
-                    _activePatterns = Enumerable.Range(0, Project.Patterns.Count).ToList();
-                else
-                    _activePatterns = new List<int> { Project.CurrentPatternIndex };
+                SetActivePatterns();
             }
             finally
             {
                 _lock.Release();
             }
+        }
+
+        private void SetActivePatterns()
+        {
+            if (PlaybackMode == PlaybackMode.All)
+                _activePatterns = Enumerable.Range(0, Project.Patterns.Count).ToList();
+            else
+                _activePatterns = new List<int> { Project.CurrentPatternIndex };
         }
 
         public async Task StartAsync()
@@ -255,6 +260,7 @@ namespace OSCSequencer
             try
             {
                 Project.CurrentPatternIndex = (Project.CurrentPatternIndex + 1) % Project.Patterns.Count;
+                SetActivePatterns();
             }
             finally
             {
