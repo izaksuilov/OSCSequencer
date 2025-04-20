@@ -110,7 +110,7 @@
             try
             {
                 int bpm = int.Parse(Console.ReadLine() ?? "120");
-                await _sequencer.SetTempoAsync(bpm));
+                await _sequencer.SetTempoAsync(bpm);
             }
             catch (FormatException)
             {
