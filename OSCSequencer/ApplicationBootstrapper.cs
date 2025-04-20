@@ -33,12 +33,7 @@ namespace OSCSequencer
 
         private void PrintHelp()
         {
-            Console.WriteLine("OSC Секвенсор запущен. Доступные команды:");
-            Console.WriteLine("[S] Старт       [X] Стоп       [P] Пауза");
-            Console.WriteLine("[R] Запись ноты [T] Темп       [L] Длина паттерна");
-            Console.WriteLine("[C] Очистка     [D] Состояние  [F] Сохранить");
-            Console.WriteLine("[G] Загрузить   [N] След. пат. [B] Копировать пат.");
-            Console.WriteLine("[Q] Выход");
+            _commandManager.PrintHelp();
         }
 
         private async Task ProcessInputAsync()

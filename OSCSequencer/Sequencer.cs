@@ -1,4 +1,5 @@
 ﻿using Rug.Osc;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Media;
 using System.Text;
@@ -21,6 +22,7 @@ namespace OSCSequencer
                 CurrentPatternIndex = 0,
                 Bpm = initialBpm
             };
+            SwitchPlaybackMode(PlaybackMode.Single).Wait();
         }
 
         #region Members
@@ -31,10 +33,13 @@ namespace OSCSequencer
         private readonly OscSettings _settings;
         private readonly SemaphoreSlim _lock = new(1, 1);
 
+        private PlaybackMode _playbackMode = PlaybackMode.Single;
+        private List<int> _activePatterns = new();
+        private readonly ConcurrentDictionary<int, int> _patternSteps = new();
+
         private int _currentPatternIndex;
         private bool _isPlaying;
         private bool _isPaused;
-        private int _currentStep;
         private CancellationTokenSource? _playbackCts;
 
         public Pattern CurrentPattern
@@ -56,6 +61,31 @@ namespace OSCSequencer
 
         #region Methods
 
+        public async Task SwitchPlaybackMode(PlaybackMode? mode = null)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                if (mode is not null)
+                    _playbackMode = mode.Value;
+                else
+                {
+                    _playbackMode = _playbackMode == PlaybackMode.All
+                        ? PlaybackMode.Single
+                        : PlaybackMode.All;
+                }
+
+                if (_playbackMode == PlaybackMode.All)
+                    _activePatterns = Enumerable.Range(0, _project.Patterns.Count).ToList();
+                else
+                    _activePatterns = new List<int> { _project.CurrentPatternIndex };
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
         public async Task StartAsync()
         {
             await _lock.WaitAsync();
@@ -76,7 +106,6 @@ namespace OSCSequencer
         private async Task PlaybackLoop(CancellationToken ct)
         {
             var stopwatch = new Stopwatch();
-            var pattern = CurrentPattern;
 
             while (_isPlaying && !ct.IsCancellationRequested)
             {
@@ -89,32 +118,47 @@ namespace OSCSequencer
 
                 stopwatch.Restart();
 
-                var note = pattern.Notes[_currentStep];
-
-                // Обновляем визуализацию перед отправкой ноты
-                UpdateVisualization();
-
-                if (note > 0)
+                try
                 {
+                    var patternsToPlay = _activePatterns.ToList();
+
+                    // Воспроизведение всех выбранных паттернов
+                    await Parallel.ForEachAsync(patternsToPlay, async (patternIndex, ct) =>
+                    {
+                        var pattern = _project.Patterns[patternIndex];
+                        var step = _patternSteps.GetValueOrDefault(patternIndex, 0);
+
+                        var note = pattern.Notes[step];
+                        if (note > 0)
+                        {
 #if DEBUG
-                    DebugSound(note);
+                            DebugSound(note);
 #endif
-                    //SendOsc(_settings.Addresses["noteon"], note);
-                    //await Task.Delay(50, ct);
-                    //SendOsc(_settings.Addresses["noteoff"], note);
+
+                            SendOsc($"/pattern{patternIndex}/noteon", note);
+                            await Task.Delay(50, ct);
+                            SendOsc($"/pattern{patternIndex}/noteoff", note);
+                        }
+
+                        // Обновляем шаг для паттерна
+                        _patternSteps[patternIndex] = (step + 1) % pattern.Length;
+                    });
+
+                    // Рассчитываем целевую длительность
+                    var interval = 60000 / _project.Bpm;
+                    var elapsed = stopwatch.ElapsedMilliseconds;
+                    var remainingDelay = interval - (int)elapsed;
+
+                    // Корректируем задержку с учетом выполненной работы
+                    if (remainingDelay > 0)
+                        await Task.Delay(remainingDelay, ct);
+
+                    UpdateVisualization();
                 }
-
-                // Рассчитываем целевую длительность
-                var interval = 60000 / _project.Bpm;
-                var elapsed = stopwatch.ElapsedMilliseconds;
-                var remainingDelay = interval - (int)elapsed;
-
-                // Корректируем задержку с учетом выполненной работы
-                if (remainingDelay > 0)
-                    await Task.Delay(remainingDelay, ct);
-
-                _currentStep = (_currentStep + 1) % pattern.Length;
-                stopwatch.Stop();
+                finally
+                {
+                    stopwatch.Stop();
+                }
             }
         }
 
@@ -124,7 +168,9 @@ namespace OSCSequencer
             try
             {
                 _isPlaying = false;
-                _currentStep = 0;
+                // Сбрасываем все шаги
+                foreach (var key in _patternSteps.Keys.ToList())
+                    _patternSteps[key] = 0;
                 _playbackCts?.Cancel();
             }
             finally
@@ -202,13 +248,26 @@ namespace OSCSequencer
             }
         }
 
-        // Обновленные методы работы с паттернами
         public async Task SwitchPatternAsync()
         {
             await _lock.WaitAsync();
             try
             {
                 _project.CurrentPatternIndex = (_project.CurrentPatternIndex + 1) % _project.Patterns.Count;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task SelectPattern(int index)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                if (index >= 0 && index < _project.Patterns.Count)
+                    _project.CurrentPatternIndex = index;
             }
             finally
             {
@@ -223,6 +282,7 @@ namespace OSCSequencer
             {
                 var copy = CurrentPattern.Clone();
                 _project.Patterns.Add(copy);
+                _patternSteps[_project.Patterns.Count - 1] = 0;
             }
             finally
             {
@@ -289,22 +349,31 @@ namespace OSCSequencer
         // Обновляем визуализацию
         private void UpdateVisualization(bool paused = false)
         {
-            var visualization = new StringBuilder();
-            var pattern = CurrentPattern;
+            var vis = new StringBuilder();
+            vis.AppendLine($"Режим: {_playbackMode} | BPM: {_project.Bpm} | Статус: {(paused ? "PS" : "PL")}");
 
-            visualization.Append(paused ? "PS" : "PL");
-            visualization.Append($"BPM: {_project.Bpm} | ");
-            visualization.Append($"Паттерн {_project.CurrentPatternIndex + 1}/{_project.Patterns.Count} | ");
-
-            for (int i = 0; i < pattern.Length; i++)
+            for (int i = 0; i < _project.Patterns.Count; i++)
             {
-                if (i == _currentStep)
-                    visualization.Append(i == _currentStep ? $"({pattern.Notes[i]:D3})" : $"[{pattern.Notes[i]:D3}]");
-                else
-                    visualization.Append(pattern.Notes[i] > 0 ? $"[{pattern.Notes[i]:D3}]" : "[    ]");
+                var pattern = _project.Patterns[i];
+                var currentStep = _patternSteps.GetValueOrDefault(i, 0);
+
+                if (_playbackMode == PlaybackMode.Single)
+                    vis.Append(i == _project.CurrentPatternIndex ? "!" : " ");
+                vis.Append($"# {i}:");
+
+                for (int j = 0; j < pattern.Length; j++)
+                {
+                    if (j == currentStep)
+                        vis.Append($"({pattern.Notes[j]:D3})");
+                    else
+                        vis.Append(pattern.Notes[j] > 0 ? $"[{pattern.Notes[j]:D3}]" : "[   ]");
+                }
+                vis.AppendLine();
             }
 
-            Console.Write("\r" + visualization.ToString().PadRight(Console.WindowWidth - 1));
+            // Перемещаем курсор для перезаписи
+            Console.SetCursorPosition(0, Console.CursorTop - _project.Patterns.Count - 1);
+            Console.Write(vis.ToString());
         }
 
         private void DebugSound(int note)

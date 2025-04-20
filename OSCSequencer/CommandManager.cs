@@ -22,8 +22,20 @@
                 [ConsoleKey.F] = SaveProject,
                 [ConsoleKey.G] = LoadProject,
                 [ConsoleKey.N] = NextPattern,
-                [ConsoleKey.B] = CopyPattern
+                [ConsoleKey.B] = CopyPattern,
+                [ConsoleKey.M] = SwitchPlaybackMode,
             };
+        }
+
+        public void PrintHelp()
+        {
+            Console.WriteLine("OSC Секвенсор запущен. Доступные команды:");
+            Console.WriteLine("[M] Режим воспроизведения");
+            Console.WriteLine("[S] Старт       [X] Стоп       [P] Пауза");
+            Console.WriteLine("[R] Запись ноты [T] Темп       [L] Длина паттерна");
+            Console.WriteLine("[C] Очистка     [D] Состояние  [F] Сохранить");
+            Console.WriteLine("[G] Загрузить   [N] След. пат. [B] Копировать пат.");
+            Console.WriteLine("[Q] Выход");
         }
 
         private async Task Start()
@@ -85,5 +97,10 @@
         private async Task NextPattern() => await _sequencer.SwitchPatternAsync();
 
         private async Task CopyPattern() => await _sequencer.CopyPatternAsync();
+
+        private async Task SwitchPlaybackMode()
+        {
+            _sequencer.SwitchPlaybackMode();
+        }
     }
 }
