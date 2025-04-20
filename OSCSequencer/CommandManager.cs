@@ -40,7 +40,7 @@
 
         private async Task Start()
         {
-            Console.WriteLine("Старт воспроизведения");
+            Console.WriteLine($"Старт воспроизведения в режиме {_sequencer.PlaybackMode}");
             await _sequencer.StartAsync();
         }
 
@@ -50,12 +50,22 @@
             await _sequencer.StopAsync();
         }
 
-        private async Task Pause() => await _sequencer.PauseAsync();
+        private async Task Pause()
+        {
+            if (_sequencer.IsPaused)
+                Console.WriteLine("Продолжить");
+            else
+                Console.WriteLine("Пауза");
+
+            await _sequencer.PauseAsync();
+        }
 
         private async Task RecordNote()
         {
+            Console.WriteLine("Запись ноты");
+
             int maxPos = _sequencer.CurrentPattern.Length;
-            Console.Write($"Позиция (1-{maxPos}): ");
+            Console.Write($"Позиция в паттерне (1-{maxPos}): ");
             int pos = int.Parse(Console.ReadLine() ?? "1");
 
             Console.Write("Нота (0-127): ");
@@ -78,7 +88,11 @@
             await _sequencer.SetPatternLengthAsync(int.Parse(Console.ReadLine() ?? "16"));
         }
 
-        private async Task ClearPattern() => await _sequencer.ClearPatternAsync();
+        private async Task ClearPattern()
+        {
+            Console.WriteLine($"Очистка паттерна {_sequencer.Project.CurrentPatternIndex}");
+            await _sequencer.ClearPatternAsync();
+        }
 
         private async Task DumpState() => await _sequencer.DumpStateAsync();
 
@@ -86,21 +100,28 @@
         {
             Console.Write("Имя файла проекта: ");
             await _sequencer.SaveProjectAsync(Console.ReadLine() ?? "project.xml");
+            Console.WriteLine("Проект сохранен!");
         }
 
         private async Task LoadProject()
         {
-            Console.Write("Имя файла проекта: ");
+            Console.Write("Имя файла проекта для загрузки: ");
             await _sequencer.LoadProjectAsync(Console.ReadLine() ?? "project.xml");
+            Console.WriteLine("Проект загружен!");
         }
 
         private async Task NextPattern() => await _sequencer.SwitchPatternAsync();
 
-        private async Task CopyPattern() => await _sequencer.CopyPatternAsync();
+        private async Task CopyPattern()
+        {
+            await _sequencer.CopyPatternAsync();
+            Console.WriteLine($"Скопирован паттерн {_sequencer.Project.CurrentPatternIndex}");
+        }
 
         private async Task SwitchPlaybackMode()
         {
-            _sequencer.SwitchPlaybackMode();
+            await _sequencer.SwitchPlaybackMode();
+            Console.WriteLine($"Выбран режим воспроизведения {_sequencer.PlaybackMode}");
         }
     }
 }

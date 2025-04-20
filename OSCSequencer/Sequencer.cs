@@ -13,7 +13,7 @@ namespace OSCSequencer
         {
             _sender = oscSender;
             _settings = oscSettings;
-            _project = new()
+            Project = new()
             {
                 Patterns = new List<Pattern>()
                 {
@@ -27,33 +27,32 @@ namespace OSCSequencer
 
         #region Members
 
-        private Project _project;
+        public Project Project { get; private set; }
 
         private readonly OscSender _sender;
         private readonly OscSettings _settings;
         private readonly SemaphoreSlim _lock = new(1, 1);
 
-        private PlaybackMode _playbackMode = PlaybackMode.Single;
+        public PlaybackMode PlaybackMode { get; private set; }
         private List<int> _activePatterns = new();
         private readonly ConcurrentDictionary<int, int> _patternSteps = new();
 
-        private int _currentPatternIndex;
-        private bool _isPlaying;
-        private bool _isPaused;
+        public bool IsPlaying { get; private set; }
+        public bool IsPaused { get; private set; }
         private CancellationTokenSource? _playbackCts;
 
         public Pattern CurrentPattern
         {
             get
             {
-                if (_project.Patterns.Count == 0 || _project.Patterns.Count - 1 < _project.CurrentPatternIndex)
+                if (Project.Patterns.Count == 0 || Project.Patterns.Count - 1 < Project.CurrentPatternIndex)
                 {
-                    while (_project.Patterns.Count <= _project.CurrentPatternIndex)
+                    while (Project.Patterns.Count <= Project.CurrentPatternIndex)
                     {
-                        _project.Patterns.Add(new Pattern(16));
+                        Project.Patterns.Add(new Pattern(16));
                     }
                 }
-                return _project.Patterns[_project.CurrentPatternIndex];
+                return Project.Patterns[Project.CurrentPatternIndex];
             }
         }
 
@@ -67,18 +66,18 @@ namespace OSCSequencer
             try
             {
                 if (mode is not null)
-                    _playbackMode = mode.Value;
+                    PlaybackMode = mode.Value;
                 else
                 {
-                    _playbackMode = _playbackMode == PlaybackMode.All
+                    PlaybackMode = PlaybackMode == PlaybackMode.All
                         ? PlaybackMode.Single
                         : PlaybackMode.All;
                 }
 
-                if (_playbackMode == PlaybackMode.All)
-                    _activePatterns = Enumerable.Range(0, _project.Patterns.Count).ToList();
+                if (PlaybackMode == PlaybackMode.All)
+                    _activePatterns = Enumerable.Range(0, Project.Patterns.Count).ToList();
                 else
-                    _activePatterns = new List<int> { _project.CurrentPatternIndex };
+                    _activePatterns = new List<int> { Project.CurrentPatternIndex };
             }
             finally
             {
@@ -91,9 +90,9 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                if (_isPlaying) return;
+                if (IsPlaying) return;
 
-                _isPlaying = true;
+                IsPlaying = true;
                 _playbackCts = new CancellationTokenSource();
                 _ = PlaybackLoop(_playbackCts.Token);
             }
@@ -107,9 +106,9 @@ namespace OSCSequencer
         {
             var stopwatch = new Stopwatch();
 
-            while (_isPlaying && !ct.IsCancellationRequested)
+            while (IsPlaying && !ct.IsCancellationRequested)
             {
-                if (_isPaused)
+                if (IsPaused)
                 {
                     UpdateVisualization(true);
                     await Task.Delay(100, ct);
@@ -125,7 +124,7 @@ namespace OSCSequencer
                     // Воспроизведение всех выбранных паттернов
                     await Parallel.ForEachAsync(patternsToPlay, async (patternIndex, ct) =>
                     {
-                        var pattern = _project.Patterns[patternIndex];
+                        var pattern = Project.Patterns[patternIndex];
                         var step = _patternSteps.GetValueOrDefault(patternIndex, 0);
 
                         var note = pattern.Notes[step];
@@ -145,7 +144,7 @@ namespace OSCSequencer
                     });
 
                     // Рассчитываем целевую длительность
-                    var interval = 60000 / _project.Bpm;
+                    var interval = 60000 / Project.Bpm;
                     var elapsed = stopwatch.ElapsedMilliseconds;
                     var remainingDelay = interval - (int)elapsed;
 
@@ -167,7 +166,7 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                _isPlaying = false;
+                IsPlaying = false;
                 // Сбрасываем все шаги
                 foreach (var key in _patternSteps.Keys.ToList())
                     _patternSteps[key] = 0;
@@ -184,7 +183,7 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                _isPaused = !_isPaused;
+                IsPaused = !IsPaused;
             }
             finally
             {
@@ -211,7 +210,7 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                _project.Bpm = bpm;
+                Project.Bpm = bpm;
                 SendOsc(_settings.Addresses["tempo"], bpm);
             }
             finally
@@ -227,7 +226,7 @@ namespace OSCSequencer
             {
                 var newPattern = new Pattern(length);
                 Array.Copy(CurrentPattern.Notes, newPattern.Notes, Math.Min(length, CurrentPattern.Length));
-                _project.Patterns[_currentPatternIndex] = newPattern;
+                Project.Patterns[Project.CurrentPatternIndex] = newPattern;
             }
             finally
             {
@@ -253,7 +252,7 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                _project.CurrentPatternIndex = (_project.CurrentPatternIndex + 1) % _project.Patterns.Count;
+                Project.CurrentPatternIndex = (Project.CurrentPatternIndex + 1) % Project.Patterns.Count;
             }
             finally
             {
@@ -266,8 +265,8 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                if (index >= 0 && index < _project.Patterns.Count)
-                    _project.CurrentPatternIndex = index;
+                if (index >= 0 && index < Project.Patterns.Count)
+                    Project.CurrentPatternIndex = index;
             }
             finally
             {
@@ -281,8 +280,8 @@ namespace OSCSequencer
             try
             {
                 var copy = CurrentPattern.Clone();
-                _project.Patterns.Add(copy);
-                _patternSteps[_project.Patterns.Count - 1] = 0;
+                Project.Patterns.Add(copy);
+                _patternSteps[Project.Patterns.Count - 1] = 0;
             }
             finally
             {
@@ -295,8 +294,8 @@ namespace OSCSequencer
             await _lock.WaitAsync();
             try
             {
-                Console.WriteLine($"Текущий BPM: {_project.Bpm}");
-                Console.WriteLine($"Паттерн #{_currentPatternIndex} Длина: {CurrentPattern.Length}");
+                Console.WriteLine($"Текущий BPM: {Project.Bpm}");
+                Console.WriteLine($"Паттерн #{Project.CurrentPatternIndex} Длина: {CurrentPattern.Length}");
                 Console.WriteLine($"Шаги: [{string.Join(" ", CurrentPattern.Notes)}]");
             }
             finally
@@ -311,7 +310,7 @@ namespace OSCSequencer
             try
             {
                 using var writer = new StreamWriter(filename);
-                new XmlSerializer(typeof(Project)).Serialize(writer, _project);
+                new XmlSerializer(typeof(Project)).Serialize(writer, Project);
             }
             finally
             {
@@ -325,7 +324,7 @@ namespace OSCSequencer
             try
             {
                 using var reader = new StreamReader(filename);
-                _project = (Project)new XmlSerializer(typeof(Project)).Deserialize(reader)!;
+                Project = (Project)new XmlSerializer(typeof(Project)).Deserialize(reader)!;
             }
             finally
             {
@@ -350,15 +349,15 @@ namespace OSCSequencer
         private void UpdateVisualization(bool paused = false)
         {
             var vis = new StringBuilder();
-            vis.AppendLine($"Режим: {_playbackMode} | BPM: {_project.Bpm} | Статус: {(paused ? "PS" : "PL")}");
+            vis.AppendLine($"Режим: {PlaybackMode} | BPM: {Project.Bpm} | Статус: {(paused ? "PS" : "PL")}");
 
-            for (int i = 0; i < _project.Patterns.Count; i++)
+            for (int i = 0; i < Project.Patterns.Count; i++)
             {
-                var pattern = _project.Patterns[i];
+                var pattern = Project.Patterns[i];
                 var currentStep = _patternSteps.GetValueOrDefault(i, 0);
 
-                if (_playbackMode == PlaybackMode.Single)
-                    vis.Append(i == _project.CurrentPatternIndex ? "!" : " ");
+                if (PlaybackMode == PlaybackMode.Single)
+                    vis.Append(i == Project.CurrentPatternIndex ? "!" : " ");
                 vis.Append($"# {i}:");
 
                 for (int j = 0; j < pattern.Length; j++)
@@ -372,7 +371,7 @@ namespace OSCSequencer
             }
 
             // Перемещаем курсор для перезаписи
-            Console.SetCursorPosition(0, Console.CursorTop - _project.Patterns.Count - 1);
+            Console.SetCursorPosition(0, Console.CursorTop - Project.Patterns.Count - 1);
             Console.Write(vis.ToString());
         }
 
