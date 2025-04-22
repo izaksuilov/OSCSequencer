@@ -228,13 +228,14 @@
         {
             try
             {
-                await _sequencer.SwitchPlaybackMode();
+                _sequencer.SwitchVisualizeMode();
                 Console.WriteLine($"Режим визуализации {(_sequencer.IsVisualizationEnabled ? "Вкл" : "Выкл")}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка выбора режима визуализации: {ex.Message}");
             }
+            await Task.CompletedTask;
         }
     }
 }

@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Rug.Osc" Version="1.2.5" />
-    <PackageReference Include="System.Windows.Extensions" Version="9.0.4" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="System.Windows.Extensions" Version="9.0.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -384,6 +384,11 @@ namespace OSCSequencer
             Console.Write(vis.ToString());
         }
 
+        internal void SwitchVisualizeMode()
+        {
+            IsVisualizationEnabled = !IsVisualizationEnabled;
+        }
+
 #if DEBUG
 
         private void DebugSound(int note)
