@@ -342,7 +342,7 @@ namespace OSCSequencer
             }
         }
 
-        private void SendOsc(string address, params object[] args)
+        public void SendOsc(string address, params object[] args)
         {
             OscSender.Send(new OscMessage(address, args));
         }

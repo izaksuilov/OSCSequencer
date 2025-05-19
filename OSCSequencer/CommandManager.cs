@@ -31,6 +31,7 @@
                 [ConsoleKey.U] = RemoveOscMessage,
                 [ConsoleKey.J] = SaveOscMessagesToXml,
                 [ConsoleKey.K] = LoadOscMessagesFromXml,
+                [ConsoleKey.Z] = SendCustomOscMessage,
             };
         }
 
@@ -48,6 +49,7 @@
             Console.WriteLine("[U] Удалить OSC-сообщение");
             Console.WriteLine("[J] Сохранить OSC-сообщения в XML");
             Console.WriteLine("[K] Загрузить OSC-сообщения из XML");
+            Console.WriteLine("[Z] Отправить произвольную OSC-команду");
             Console.WriteLine("[Q] Выход");
         }
 
@@ -334,6 +336,45 @@
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+            }
+            await Task.CompletedTask;
+        }
+
+        private async Task SendCustomOscMessage()
+        {
+            Console.Write("Введите OSC-адрес: ");
+            string? address = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                Console.WriteLine("OSC-адрес не может быть пустым.");
+                return;
+            }
+
+            Console.Write("Введите параметры через пробел (можно оставить пустым): ");
+            string? argsLine = Console.ReadLine();
+            object[] args = Array.Empty<object>();
+            if (!string.IsNullOrWhiteSpace(argsLine))
+            {
+                args = argsLine
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s =>
+                    {
+                        // Попробуем преобразовать к int, double, иначе оставим строкой
+                        if (int.TryParse(s, out int i)) return (object)i;
+                        if (double.TryParse(s, out double d)) return (object)d;
+                        return s;
+                    })
+                    .ToArray();
+            }
+
+            try
+            {
+                _sequencer.SendOsc(address, args);
+                Console.WriteLine("OSC-команда отправлена.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка отправки OSC: {ex.Message}");
             }
             await Task.CompletedTask;
         }
