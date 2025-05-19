@@ -24,6 +24,7 @@ namespace OSCSequencer
                 [ConsoleKey.F] = SaveProject,
                 [ConsoleKey.G] = LoadProject,
                 [ConsoleKey.N] = NextPattern,
+                [ConsoleKey.W] = AddPattern,
                 [ConsoleKey.B] = CopyPattern,
                 [ConsoleKey.M] = SwitchPlaybackMode,
                 [ConsoleKey.V] = SwitchVisualization,
@@ -52,8 +53,8 @@ namespace OSCSequencer
 
             Console.WriteLine();
             Console.WriteLine("[C] Очистка паттерна  [D] Состояние паттерна");
-            Console.WriteLine("[N] След. паттерн     [B] Копировать паттерн");
-            Console.WriteLine("[L] Длина паттерна");
+            Console.WriteLine("[W] Создать паттерн   [B] Копировать паттерн");
+            Console.WriteLine("[L] Длина паттерна    [N] След. паттерн");
 
             Console.WriteLine();
             Console.WriteLine("[O] Список OSC-сообщений");
@@ -226,6 +227,25 @@ namespace OSCSequencer
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка переключения паттерна: {ex.Message}");
+            }
+        }
+
+        private async Task AddPattern()
+        {
+            Console.Write("Длина нового паттерна: ");
+            try
+            {
+                int length = int.Parse(Console.ReadLine() ?? "16");
+                await _sequencer.AddPatternAsync(length);
+                Console.WriteLine("Паттерн добавлен!");
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Неверный формат длины. Попробуйте снова.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка добавления паттерна: {ex.Message}");
             }
         }
 

@@ -228,6 +228,19 @@ namespace OSCSequencer.SequencerData
             }
         }
 
+        public async Task AddPatternAsync(int length)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                Project.Patterns.Add(new Pattern(length));
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
         public async Task SetPatternLengthAsync(int length)
         {
             await _lock.WaitAsync();
