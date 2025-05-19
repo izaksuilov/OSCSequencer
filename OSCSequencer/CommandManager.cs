@@ -40,18 +40,31 @@ namespace OSCSequencer
         public void PrintHelp()
         {
             Console.WriteLine("OSC Секвенсор запущен. Доступные команды:");
-            Console.WriteLine("[M] Режим воспроизведения [V] Режим визуализации");
-            Console.WriteLine("[S] Старт       [X] Стоп       [P] Пауза");
-            Console.WriteLine("[R] Запись ноты [T] Темп       [L] Длина паттерна");
-            Console.WriteLine("[C] Очистка     [D] Состояние  [F] Сохранить");
-            Console.WriteLine("[G] Загрузить   [N] След. пат. [B] Копировать пат.");
+
+            Console.WriteLine();
+            Console.WriteLine("[S] Старт  [X] Стоп  [P] Пауза");
+            Console.WriteLine("[M] Режим воспроизведения");
+            Console.WriteLine("[V] Режим визуализации");
+
+            Console.WriteLine();
+            Console.WriteLine("[G] Загрузить проект  [F] Сохранить проект");
+            Console.WriteLine("[R] Запись ноты       [T] Запись темпа");
+
+            Console.WriteLine();
+            Console.WriteLine("[C] Очистка паттерна  [D] Состояние паттерна");
+            Console.WriteLine("[N] След. паттерн     [B] Копировать паттерн");
+            Console.WriteLine("[L] Длина паттерна");
+
+            Console.WriteLine();
             Console.WriteLine("[O] Список OSC-сообщений");
             Console.WriteLine("[A] Добавить OSC-сообщение");
             Console.WriteLine("[E] Редактировать OSC-сообщение");
             Console.WriteLine("[U] Удалить OSC-сообщение");
-            Console.WriteLine("[J] Сохранить OSC-сообщения в XML");
-            Console.WriteLine("[K] Загрузить OSC-сообщения из XML");
+            Console.WriteLine("[J] Сохранить OSC-сообщения");
+            Console.WriteLine("[K] Загрузить OSC-сообщения");
             Console.WriteLine("[Z] Отправить произвольную OSC-команду");
+
+            Console.WriteLine();
             Console.WriteLine("[Q] Выход");
         }
 

@@ -30,6 +30,7 @@ namespace OSCSequencer
             _sender.Connect();
 
             OscSettings settings = new();
+
             _sequencer = new Sequencer(
                 initialBpm: 120,
                 initialPatternLength: 16,
