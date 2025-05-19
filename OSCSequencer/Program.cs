@@ -8,7 +8,7 @@ namespace OSCSecvensor
 
         static async Task Main(string[] args)
         {
-            _app = new ApplicationBootstrapper();
+            _app = new ApplicationBootstrapper(args);
             await _app.RunAsync();
         }
     }
