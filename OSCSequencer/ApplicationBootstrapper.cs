@@ -1,4 +1,5 @@
-﻿using Rug.Osc;
+﻿using OSCSequencer.Osc;
+using Rug.Osc;
 using System.Net;
 
 namespace OSCSequencer

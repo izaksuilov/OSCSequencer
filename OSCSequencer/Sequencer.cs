@@ -1,9 +1,11 @@
-﻿using Rug.Osc;
+﻿using OSCSequencer.Osc;
+using Rug.Osc;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Media;
 using System.Text;
 using System.Xml.Serialization;
+using OscMessage = Rug.Osc.OscMessage;
 
 namespace OSCSequencer
 {
@@ -141,9 +143,9 @@ namespace OSCSequencer
                             DebugSound(note);
 #endif
 
-                            SendOsc($"/pattern{patternIndex}/noteon", note);
+                            SendOsc(string.Format(_settings.Messages["pattern_noteon"], patternIndex), note);
                             await Task.Delay(50, ct);
-                            SendOsc($"/pattern{patternIndex}/noteoff", note);
+                            SendOsc(string.Format(_settings.Messages["pattern_noteoff"], patternIndex));
                         }
 
                         // Обновляем шаг для паттерна
@@ -218,7 +220,7 @@ namespace OSCSequencer
             try
             {
                 Project.Bpm = bpm;
-                SendOsc(_settings.Addresses["tempo"], bpm);
+                SendOsc(_settings.Messages["tempo"], bpm);
             }
             finally
             {
