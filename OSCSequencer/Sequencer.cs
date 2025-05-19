@@ -13,8 +13,8 @@ namespace OSCSequencer
     {
         public Sequencer(int initialBpm, int initialPatternLength, OscSender oscSender, OscSettings oscSettings)
         {
-            _sender = oscSender;
-            _settings = oscSettings;
+            OscSender = oscSender;
+            OscSettings = oscSettings;
             Project = new()
             {
                 Patterns = new List<Pattern>()
@@ -30,9 +30,9 @@ namespace OSCSequencer
         #region Members
 
         public Project Project { get; private set; }
+        public OscSender OscSender { get; private set; }
+        public OscSettings OscSettings { get; private set; }
 
-        private readonly OscSender _sender;
-        private readonly OscSettings _settings;
         private readonly SemaphoreSlim _lock = new(1, 1);
 
         public PlaybackMode PlaybackMode { get; private set; }
@@ -143,9 +143,9 @@ namespace OSCSequencer
                             DebugSound(note);
 #endif
 
-                            SendOsc(string.Format(_settings.Messages["pattern_noteon"], patternIndex), note);
+                            SendOsc(string.Format(OscSettings.Messages["pattern_noteon"], patternIndex), note);
                             await Task.Delay(50, ct);
-                            SendOsc(string.Format(_settings.Messages["pattern_noteoff"], patternIndex));
+                            SendOsc(string.Format(OscSettings.Messages["pattern_noteoff"], patternIndex));
                         }
 
                         // Обновляем шаг для паттерна
@@ -220,7 +220,7 @@ namespace OSCSequencer
             try
             {
                 Project.Bpm = bpm;
-                SendOsc(_settings.Messages["tempo"], bpm);
+                SendOsc(OscSettings.Messages["tempo"], bpm);
             }
             finally
             {
@@ -344,7 +344,7 @@ namespace OSCSequencer
 
         private void SendOsc(string address, params object[] args)
         {
-            _sender.Send(new OscMessage(address, args));
+            OscSender.Send(new OscMessage(address, args));
         }
 
         public void Dispose()

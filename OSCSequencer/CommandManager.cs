@@ -25,6 +25,12 @@
                 [ConsoleKey.B] = CopyPattern,
                 [ConsoleKey.M] = SwitchPlaybackMode,
                 [ConsoleKey.V] = SwitchVisualization,
+                [ConsoleKey.O] = ShowOscMessages,
+                [ConsoleKey.A] = AddOscMessage,
+                [ConsoleKey.E] = EditOscMessage,
+                [ConsoleKey.U] = RemoveOscMessage,
+                [ConsoleKey.J] = SaveOscMessagesToXml,
+                [ConsoleKey.K] = LoadOscMessagesFromXml,
             };
         }
 
@@ -36,8 +42,16 @@
             Console.WriteLine("[R] Запись ноты [T] Темп       [L] Длина паттерна");
             Console.WriteLine("[C] Очистка     [D] Состояние  [F] Сохранить");
             Console.WriteLine("[G] Загрузить   [N] След. пат. [B] Копировать пат.");
+            Console.WriteLine("[O] Список OSC-сообщений");
+            Console.WriteLine("[A] Добавить OSC-сообщение");
+            Console.WriteLine("[E] Редактировать OSC-сообщение");
+            Console.WriteLine("[U] Удалить OSC-сообщение");
+            Console.WriteLine("[J] Сохранить OSC-сообщения в XML");
+            Console.WriteLine("[K] Загрузить OSC-сообщения из XML");
             Console.WriteLine("[Q] Выход");
         }
+
+        #region Sequencer Commands
 
         private async Task Start()
         {
@@ -237,5 +251,93 @@
             }
             await Task.CompletedTask;
         }
+
+        #endregion
+
+        #region OSC Commands
+
+        private async Task ShowOscMessages()
+        {
+            Console.WriteLine("Список OSC-сообщений:");
+            foreach (var kvp in _sequencer.OscSettings.Messages)
+            {
+                Console.WriteLine($"[{kvp.Key}] = \"{kvp.Value}\"");
+            }
+            await Task.CompletedTask;
+        }
+
+        private async Task AddOscMessage()
+        {
+            Console.Write("Введите ключ нового сообщения: ");
+            string key = Console.ReadLine() ?? "";
+            Console.Write("Введите значение OSC-адреса: ");
+            string value = Console.ReadLine() ?? "";
+            if (_sequencer.OscSettings.AddMessage(key, value))
+                Console.WriteLine("Сообщение добавлено.");
+            else
+                Console.WriteLine("Ошибка: ключ уже существует.");
+            await Task.CompletedTask;
+        }
+
+        private async Task EditOscMessage()
+        {
+            Console.Write("Введите существующий ключ сообщения: ");
+            string oldKey = Console.ReadLine() ?? "";
+            Console.Write("Введите новый ключ (или оставьте пустым для без изменений): ");
+            string? newKey = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(newKey)) newKey = oldKey;
+            Console.Write("Введите новое значение OSC-адреса: ");
+            string newValue = Console.ReadLine() ?? "";
+            if (_sequencer.OscSettings.EditMessage(oldKey, newKey, newValue))
+                Console.WriteLine("Сообщение изменено.");
+            else
+                Console.WriteLine("Ошибка: ключ не найден.");
+            await Task.CompletedTask;
+        }
+
+        private async Task RemoveOscMessage()
+        {
+            Console.Write("Введите ключ сообщения для удаления: ");
+            string key = Console.ReadLine() ?? "";
+            if (_sequencer.OscSettings.RemoveMessage(key))
+                Console.WriteLine("Сообщение удалено.");
+            else
+                Console.WriteLine("Ошибка: ключ не найден.");
+            await Task.CompletedTask;
+        }
+
+        private async Task SaveOscMessagesToXml()
+        {
+            Console.Write("Имя файла для сохранения OSC-сообщений: ");
+            string filename = Console.ReadLine() ?? "osc_messages.xml";
+            try
+            {
+                _sequencer.OscSettings.SaveToXml(filename);
+                Console.WriteLine("OSC-сообщения сохранены.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка сохранения: {ex.Message}");
+            }
+            await Task.CompletedTask;
+        }
+
+        private async Task LoadOscMessagesFromXml()
+        {
+            Console.Write("Имя файла для загрузки OSC-сообщений: ");
+            string filename = Console.ReadLine() ?? "osc_messages.xml";
+            try
+            {
+                _sequencer.OscSettings.LoadFromXml(filename);
+                Console.WriteLine("OSC-сообщения загружены.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+            }
+            await Task.CompletedTask;
+        }
+
+        #endregion
     }
 }
