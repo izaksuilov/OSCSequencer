@@ -16,7 +16,8 @@ namespace OSCSequencer
                 [ConsoleKey.S] = Start,
                 [ConsoleKey.X] = Stop,
                 [ConsoleKey.P] = Pause,
-                [ConsoleKey.R] = RecordNote,
+                [ConsoleKey.R] = RecordNotes,
+                [ConsoleKey.Y] = RecordNote,
                 [ConsoleKey.T] = SetTempo,
                 [ConsoleKey.L] = SetPatternLength,
                 [ConsoleKey.C] = ClearPattern,
@@ -49,7 +50,8 @@ namespace OSCSequencer
 
             Console.WriteLine();
             Console.WriteLine("[G] Загрузить проект  [F] Сохранить проект");
-            Console.WriteLine("[R] Запись ноты       [T] Запись темпа");
+            Console.WriteLine("[R] Запись нот        [Y] Запись одной ноты");
+            Console.WriteLine("[T] Запись темпа");
 
             Console.WriteLine();
             Console.WriteLine("[C] Очистка паттерна  [D] Состояние паттерна");
@@ -64,9 +66,6 @@ namespace OSCSequencer
             Console.WriteLine("[J] Сохранить OSC-сообщения");
             Console.WriteLine("[K] Загрузить OSC-сообщения");
             Console.WriteLine("[Z] Отправить произвольную OSC-команду");
-
-            Console.WriteLine();
-            Console.WriteLine("[Q] Выход");
         }
 
         #region Sequencer Commands
@@ -111,6 +110,30 @@ namespace OSCSequencer
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка паузы: {ex.Message}");
+            }
+        }
+
+        private async Task RecordNotes()
+        {
+            Console.WriteLine("Запись нот");
+
+            try
+            {
+                int patternLength = _sequencer.CurrentPattern.Length;
+                Console.WriteLine($"Введите до {patternLength} нот через пробел:");
+                string? notesLine = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(notesLine))
+                {
+                    Console.WriteLine("Ввод пустой. Операция отменена.");
+                    return;
+                }
+
+                await _sequencer.RecordNotesAsync(notesLine);
+                Console.WriteLine("Ноты записаны!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка записи: {ex.Message}");
             }
         }
 

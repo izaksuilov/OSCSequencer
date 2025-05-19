@@ -200,6 +200,31 @@ namespace OSCSequencer.SequencerData
             }
         }
 
+        public async Task RecordNotesAsync(string notesLine)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                var notes = notesLine
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s, out int n) ? n : 0)
+                    .ToArray();
+
+                int patternLength = CurrentPattern.Length;
+                int count = Math.Min(notes.Length, patternLength);
+
+                for (int i = 0; i < count; i++)
+                    CurrentPattern.Notes[i] = notes[i];
+
+                if (notes.Length > patternLength)
+                    Console.WriteLine($"Внимание: введено больше нот, чем длина паттерна ({patternLength}). Лишние ноты не записаны.");
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
         public async Task RecordNoteAsync(int position, int note)
         {
             await _lock.WaitAsync();
