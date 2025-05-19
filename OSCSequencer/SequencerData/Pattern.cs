@@ -1,4 +1,4 @@
-﻿namespace OSCSequencer
+﻿namespace OSCSequencer.SequencerData
 {
     [Serializable]
     public class Pattern

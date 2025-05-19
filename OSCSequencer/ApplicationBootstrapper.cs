@@ -1,4 +1,5 @@
 ﻿using OSCSequencer.Osc;
+using OSCSequencer.SequencerData;
 using Rug.Osc;
 using System.Net;
 

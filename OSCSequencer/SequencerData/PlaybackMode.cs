@@ -1,4 +1,4 @@
-﻿namespace OSCSequencer
+﻿namespace OSCSequencer.SequencerData
 {
     public enum PlaybackMode
     {

@@ -1,4 +1,6 @@
-﻿namespace OSCSequencer
+﻿using OSCSequencer.SequencerData;
+
+namespace OSCSequencer
 {
     public class CommandManager
     {

@@ -7,7 +7,7 @@ using System.Text;
 using System.Xml.Serialization;
 using OscMessage = Rug.Osc.OscMessage;
 
-namespace OSCSequencer
+namespace OSCSequencer.SequencerData
 {
     public class Sequencer : IDisposable
     {
