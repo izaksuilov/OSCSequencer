@@ -2,7 +2,6 @@
 using Rug.Osc;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Media;
 using System.Text;
 using System.Xml.Serialization;
 using OscMessage = Rug.Osc.OscMessage;
@@ -357,6 +356,7 @@ namespace OSCSequencer.SequencerData
             await _lock.WaitAsync();
             try
             {
+                Project.Name = Path.GetFileNameWithoutExtension(filename);
                 using var writer = new StreamWriter(filename);
                 new XmlSerializer(typeof(Project)).Serialize(writer, Project);
             }
